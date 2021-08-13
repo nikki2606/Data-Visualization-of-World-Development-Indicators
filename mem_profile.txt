@@ -1,0 +1,66 @@
+## Memory Profiling for dictionary of Dataframes
+
+
+# Methods used:
+1. mprun : gives a line by line memory usage, along with the number of times a line of code was visited.
+2. memit : gives an overall increment in memory while running the code snippet
+3. timeit : gives the time taken for running the code snippet.
+
+%mprun
+Filename: /Users/omkarkumbhar/Desktop/programming/project/memscript_services_df.py
+
+Line #    Mem usage    Increment  Occurences   Line Contents
+============================================================
+     2    158.8 MiB    158.8 MiB           1   def get_services_df(df,services,countries,years):
+     3    158.8 MiB      0.0 MiB          15       services_struct = {service:[] for service in services}
+     4    158.9 MiB    -29.4 MiB       38545       for i,value in df.iterrows():
+     5    158.9 MiB    -30.4 MiB       38544           service = value['series']
+     6    158.9 MiB    -30.4 MiB       38544           if service in services:
+     7    158.9 MiB     -1.0 MiB        3168               country = value['country']
+     8    158.9 MiB      0.0 MiB        3168               if country in countries:
+     9                                                         # add years to a dictionary
+    10    158.9 MiB      0.0 MiB        5328                   years_dict = {int(year):float(value) 
+    11    158.9 MiB      0.0 MiB        1626                                 if value != '..' else None
+    12    158.9 MiB      0.1 MiB        1728                                 for year,value in zip(years,list(df[years].iloc[i]))}
+    13                                                         # add country to the dictionary
+    14    158.9 MiB      0.0 MiB         144                   years_dict['country'] = country
+    15                                                         # create a list of dictionaries for services dict
+    16    158.9 MiB      0.0 MiB         144                   services_struct[service].append(years_dict)
+    17                                         
+    18    158.9 MiB      0.0 MiB          15       service_dfs = {service:None for service in services}
+    19    158.9 MiB      0.0 MiB          13       for key in service_dfs.keys():
+    20    158.9 MiB      0.0 MiB          12           service_df = pd.DataFrame.from_records(services_struct[key]).set_index('country')
+    21    158.9 MiB      0.0 MiB          12           service_dfs[key] = service_df
+    22    158.9 MiB      0.0 MiB           1       return service_dfs
+
+%%memit
+peak memory: 159.11 MiB, increment: 0.21 MiB
+
+%%timeit
+3.06 s ± 105 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
+
+===========================================================
+
+## Memory Profiling for nested dictionary
+
+Filename: /Users/omkarkumbhar/Desktop/programming/project/memscript_services_dict.py
+
+Line #    Mem usage    Increment  Occurences   Line Contents
+============================================================
+     3    201.7 MiB    201.7 MiB           1   def get_services_dict(df,services,countries,years):
+     4    201.7 MiB      0.0 MiB          15       services_dict = {service:{} for service in services}
+     5    205.0 MiB      0.0 MiB       38545       for i,value in df.iterrows():
+     6    205.0 MiB      0.0 MiB       38544           service = value['series']
+     7    205.0 MiB      0.0 MiB       38544           if service in services:
+     8    205.0 MiB      0.0 MiB        3168               country = value['country']
+     9    205.0 MiB      0.0 MiB        3168               if country in countries:
+    10    205.0 MiB      0.0 MiB        3744                   services_dict[service][country] = {year:value 
+    11    205.0 MiB      0.0 MiB        1584                                                      for year,value 
+    12    205.0 MiB      3.3 MiB         144                                                      in zip(years,list(df[years].iloc[i]))}
+    13    205.0 MiB      0.0 MiB           1       return services_dict
+
+%%memit
+peak memory: 213.90 MiB, increment: 0.00 MiB
+
+%%timeit
+2.92 s ± 20.7 ms per loop (mean ± std. dev. of 7 runs, 1 loop each)
